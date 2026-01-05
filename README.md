@@ -1,17 +1,19 @@
-### wl-gammarelay-applet
-#### Control wl-gammarelay-rs via applet.
+### wl-gammarelay-brightnessctl-applet
 
-![wl-gammarelay-applet demo](./doc/wga.gif)
+#### Control wl-gammarelay-rs via applet
 
-`wl-gammarelay-applet` is a small desktop applet for controlling `wl-gammarelay-rs` via DBus.
+![wl-gammarelay-brightnessctl-applet demo](./doc/wga.gif)
+
+`wl-gammarelay-brightnessctl-applet` is a small desktop applet for controlling `wl-gammarelay-rs` via DBus, and backlight brightness separately with `brightnessctl`
 
 This applet is written in Rust and provides a [Slint](https://github.com/slint-ui/slint) UI.
 
 The applet is configurable:
+
 ```
 Control wl-gammarelay-rs via applet.
 
-Usage: wl-gammarelay-applet [OPTIONS]
+Usage: wl-gammarelay-brightnessctl-applet [OPTIONS]
 
 Options:
   -i, --hide-invert
@@ -54,7 +56,18 @@ Click, drag, or scroll the sliders to change the values. `shift + scroll` change
 
 #### Changes
 
+In progress:
+
+- [ ] Adding back tempreature, gamma, and invert color bars.
+- [ ] Fixing weird behavior when using brightnessctl elsewhere while applet is running
+
+0.2.1 changes:
+
+- [x] Reworked brightness bar to use brightnessctl instead of wl-gammarelay
+- [x] Removed temperature, gamma, and invert color bars
+
 0.1.4 changes:
+
 - [x] Text label showing set value.
 - [x] Lock fade if shift or meta pressed.
 - [x] Option to never fade out.
@@ -64,33 +77,39 @@ Click, drag, or scroll the sliders to change the values. `shift + scroll` change
 - [x] Temperature click conversion (bugfix)
 
 0.1.3 changes:
+
 - Switch to blocking zbus proxy.
 - Round temperature adjustments to nearest 100.
 - Safely mutate settings, call DBus proxy from threads.
 
 Known issue(s):
+
 - There can be drift when changing sliders with wheel or left click. See 0.1.4 bugfix.
 
 Contribution welcome.
 
 #### Getting Started
-Install [wl-gammarelay-rs](https://github.com/MaxVerevkin/wl-gammarelay-rs) as needed.
 
-To build `wl-gammarelay-applet`, here is a suggestion:
+Install [wl-gammarelay-rs](https://github.com/MaxVerevkin/wl-gammarelay-rs) and [brightnessctl](https://github.com/Hummer12007/brightnessctl) as needed.
+
+To build `wl-gammarelay-brightnessctl-applet`, here is a suggestion:
+
 ```bash
-git clone https://github.com/junelva/wl-gammarelay-applet.git
-cd wl-gammarelay-applet
+git clone https://github.com/OP-idk/wl-gammarelay-brightnessctl-applet.git
+cd wl-gammarelay-brightnessctl-applet
 cargo build --release
-ln -s $(pwd)/target/release/wl-gammarelay-applet ~/bin/wl-gammarelay-applet
+ln -s $(pwd)/target/release/wl-gammarelay-brightnessctl-applet ~/bin/wl-gammarelay-brightnessctl-applet
 ```
 
 #### Configuration in Waybar
+
 Suggestion:
+
 ```json
 "custom/wl-gammarelay-applet": {
     "format": "❍ {}",
     "exec": "wl-gammarelay-rs watch {t}",
-    "on-click": "wl-gammarelay-applet",
+    "on-click": "wl-gammarelay-brightnessctl-applet",
     "on-scroll-up": "busctl --user -- call rs.wl-gammarelay / rs.wl.gammarelay UpdateTemperature n +100",
     "on-scroll-down": "busctl --user -- call rs.wl-gammarelay / rs.wl.gammarelay UpdateTemperature n -100"
 },
@@ -99,23 +118,28 @@ Suggestion:
 Different configurations not widely tested. Feedback welcome.
 
 #### Configuration in Sway
+
 Add to `~/.config/sway/config`:
+
 ```swayconfig
-for_window [app_id="wl-gammarelay-applet"] sticky enable, move position cursor, move up 20
+for_window [app_id="wl-gammarelay-brightnessctl-applet"] sticky enable, move position cursor, move up 20
 ```
 
 #### Curiosity
+
+**Only brightness slider is available right now, same effect as using `-itg`. All other flags should still work.**
+
 ```bash
 # Open a simple window that does not automatically close.
-wl-gammarelay-applet -fc
+wl-gammarelay-brightnessctl-applet -fc
 
 # Display only brightness and gamma with caret.
-wl-gammarelay-applet -it -p0 -x175
+wl-gammarelay-brightnessctl-applet -it -p0 -x175
 
 # Display only the unlabeled gamma slider.
-wl-gammarelay-applet -bltic
+wl-gammarelay-brightnessctl-applet -bltic
 
 # Display a dark, empty square.
 # Could this be the perfect GUI?
-wl-gammarelay-applet -bigtlc -p 100
+wl-gammarelay-brightnessctl-applet -bigtlc -p 100
 ```

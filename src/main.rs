@@ -1,11 +1,12 @@
 use std::{
+    process::Command,
     sync::{Arc, Mutex},
-    thread::spawn,
+    //thread::spawn,
 };
 
 use clap::Parser;
 use thiserror::Error;
-use zbus::{blocking::Connection, dbus_proxy};
+use zbus::dbus_proxy;
 
 slint::include_modules!();
 
@@ -110,6 +111,7 @@ trait GammaRelay {
 fn dbus_temperature_to_ui_value(dbus_value: u16) -> f64 {
     (dbus_value as f64 - 1000.0) * (1.0 / 9000.0)
 }
+/*
 fn dbus_temperature_delta_to_ui_value(dbus_value: i16) -> f64 {
     (dbus_value as f64) * (1.0 / 9000.0)
 }
@@ -122,6 +124,7 @@ fn dbus_temperature_to_string(dbus_value: i16) -> String {
 fn dbus_temperature_rounded(dbus_value: i16) -> i16 {
     ((dbus_value as f64 / 100.0) as i16) * 100
 }
+*/
 
 fn dbus_brightness_to_ui_value(dbus_value: f64) -> f64 {
     dbus_value
@@ -142,13 +145,13 @@ fn dbus_brightness_rounded(dbus_value: f64) -> f64 {
 fn dbus_gamma_to_ui_value(dbus_value: f64) -> f64 {
     dbus_value - 0.5
 }
+/*
 fn dbus_gamma_to_string(dbus_value: f64) -> String {
     format!("{dbus_value:.2} γ")
 }
 fn dbus_gamma_rounded(dbus_value: f64) -> f64 {
     (dbus_value * 100.0).round() / 100.0
 }
-
 fn create_proxy() -> Result<GammaRelayProxyBlocking<'static>, AppletError> {
     let connection = spawn(|| Connection::session().expect("rust: create zbus connection"))
         .join()
@@ -160,6 +163,7 @@ fn create_proxy() -> Result<GammaRelayProxyBlocking<'static>, AppletError> {
     });
     Ok(create_proxy.join().expect("rust: export proxy"))
 }
+*/
 
 #[derive(Default, Clone, Copy)]
 struct SettingState {
@@ -206,12 +210,37 @@ impl Settings {
 
 const TICK_DELTA: u64 = 7;
 
+fn get_brightnessctl_value() -> u32 {
+    let byte_array = Command::new("brightnessctl")
+        .arg("g")
+        .output()
+        .unwrap()
+        .stdout;
+    let mut i = byte_array.len() - 1;
+    let mut decimal_place = 1;
+    let mut final_val = 0;
+    while i > 0 {
+        let char = byte_array[i - 1] as char;
+        let num = char.to_digit(10).expect("AHH");
+        final_val += num * decimal_place;
+        i -= 1;
+        decimal_place *= 10;
+    }
+    final_val
+}
+
+fn get_brightnessctl_percent() -> f64 {
+    get_brightnessctl_value() as f64 / 24242.0
+}
+
 fn main() -> Result<(), AppletError> {
     let args = Args::parse();
     let app = WlGammaRelayApplet::new()?;
+    /*
     let proxy = Arc::<Mutex<GammaRelayProxyBlocking<'_>>>::new(Mutex::new(
         create_proxy().expect("rust: create proxy"),
     ));
+    */
 
     // initialize window state and ui values
     let settings = {
@@ -220,12 +249,16 @@ fn main() -> Result<(), AppletError> {
         let default_brightness = args.default_brightness;
         let default_gamma = args.default_gamma;
 
-        app.global::<Startup>().set_show_invert(!(args.hide_invert));
+        //app.global::<Startup>().set_show_invert(!(args.hide_invert));
+        app.global::<Startup>().set_show_invert(false);
         app.global::<Startup>()
-            .set_show_temperature(!(args.hide_temperature));
+            //.set_show_temperature(!(args.hide_temperature));
+            .set_show_temperature(false);
         app.global::<Startup>()
-            .set_show_brightness(!(args.hide_brightness));
-        app.global::<Startup>().set_show_gamma(!(args.hide_gamma));
+            //.set_show_brightness(!(args.hide_brightness));
+            .set_show_brightness(true);
+        //app.global::<Startup>().set_show_gamma(!(args.hide_gamma));
+        app.global::<Startup>().set_show_gamma(false);
         app.global::<Startup>().set_show_caret(!args.hide_caret);
         app.global::<Startup>().set_show_labels(!args.hide_labels);
         app.global::<Startup>().set_show_value(!args.hide_value);
@@ -245,6 +278,7 @@ fn main() -> Result<(), AppletError> {
         app.global::<Startup>()
             .set_default_gamma(dbus_gamma_to_ui_value(default_gamma) as f32);
 
+        /*
         let proxy_ref = proxy.clone();
         let get_dbus_state = spawn(move || {
             let proxy = proxy_ref.lock().expect("rust: unlock proxy");
@@ -255,7 +289,6 @@ fn main() -> Result<(), AppletError> {
             let startup_dbus_brightness =
                 proxy.brightness().expect("rust: get brightness from dbus");
             let startup_dbus_gamma = proxy.gamma().expect("rust: get gamma from dbus");
-
             (
                 if startup_dbus_invert { 1.0 } else { 0.0 },
                 dbus_temperature_to_ui_value(startup_dbus_temperature),
@@ -276,7 +309,9 @@ fn main() -> Result<(), AppletError> {
             startup_dbus_brightness,
             startup_dbus_gamma,
         ) = get_dbus_state.join().expect("rust: get dbus state");
+        */
 
+        /*
         if !args.hide_temperature {
             app.global::<Parameters>()
                 .set_value_text(dbus_temperature_to_string(startup_dbus_temperature as i16).into());
@@ -295,18 +330,22 @@ fn main() -> Result<(), AppletError> {
             .set_invert(startup_inverted > 0.0);
         app.global::<Parameters>()
             .set_temperature(startup_temperature as f32);
+        */
+        let startup_brightness = get_brightnessctl_percent();
         app.global::<Parameters>()
             .set_brightness(startup_brightness as f32);
-        app.global::<Parameters>().set_gamma(startup_gamma as f32);
+        //app.global::<Parameters>().set_gamma(startup_gamma as f32);
 
         Arc::<Mutex<Settings>>::new(Mutex::new(Settings {
             invert: SettingState {
-                value: startup_inverted,
+                //value: startup_inverted,
+                value: 0.0,
                 delta_accumulation: 0.0,
                 default: 0.0,
             },
             temperature: SettingState {
-                value: startup_temperature,
+                //value: startup_temperature,
+                value: default_temperature,
                 delta_accumulation: 0.0,
                 default: default_temperature,
             },
@@ -316,7 +355,8 @@ fn main() -> Result<(), AppletError> {
                 default: default_brightness,
             },
             gamma: SettingState {
-                value: startup_gamma,
+                //value: startup_gamma,
+                value: default_gamma,
                 delta_accumulation: 0.0,
                 default: default_gamma,
             },
@@ -339,6 +379,7 @@ fn main() -> Result<(), AppletError> {
     }
 
     // on invert toggle widget changed, set the settings...
+    /*
     {
         let settings_ref = settings.clone();
         app.global::<Parameters>().on_invert_changed(move |value| {
@@ -346,11 +387,12 @@ fn main() -> Result<(), AppletError> {
             settings.set_invert(value);
         });
     }
+    */
 
     // on slider widget set to default...
     {
         let app_weak = app.as_weak();
-        let proxy_ref = proxy.clone();
+        //let proxy_ref = proxy.clone();
         let settings_ref = settings.clone();
         app.global::<Parameters>().on_slider_default(move |name| {
             // compare server value to default value and apply the lossless delta.
@@ -359,6 +401,7 @@ fn main() -> Result<(), AppletError> {
             let app = app_weak.unwrap();
             match &*name {
                 "temperature" => {
+                    /*
                     let proxy = proxy_ref.lock().expect("rust: unlock proxy");
                     let server_value =
                         proxy.temperature().expect("rust: get server temperature") as i16;
@@ -373,14 +416,18 @@ fn main() -> Result<(), AppletError> {
                         dbus_temperature_to_string(settings.temperature.default as i16).into(),
                     );
                     settings.invalidate_deltas();
+                    */
                 }
                 "brightness" => {
-                    let proxy = proxy_ref.lock().expect("rust: unlock proxy");
-                    let server_value = proxy.brightness().expect("rust: get server brightness");
+                    //let proxy = proxy_ref.lock().expect("rust: unlock proxy");
+                    let server_value = get_brightnessctl_percent(); //.brightness().expect("rust: get server brightness");
                     let hard_delta = settings.brightness.default - server_value;
+                    /*
                     proxy
                         .update_brightness(hard_delta)
                         .expect("rust: expect set brightness");
+                    */
+                    let _ = Command::new("brightnessctl").args(["s", "100%"]).output();
                     settings.set_brightness(dbus_brightness_to_ui_value(server_value + hard_delta));
                     app.global::<Parameters>().set_value_text(
                         dbus_brightness_to_string(settings.brightness.default).into(),
@@ -388,16 +435,18 @@ fn main() -> Result<(), AppletError> {
                     settings.invalidate_deltas();
                 }
                 "gamma" => {
-                    let proxy = proxy_ref.lock().expect("rust: unlock proxy");
-                    let server_value = proxy.gamma().expect("rust: get server gamma");
-                    let hard_delta = settings.gamma.default - server_value;
-                    proxy
-                        .update_gamma(hard_delta)
-                        .expect("rust: expect set gamma");
-                    settings.set_gamma(dbus_gamma_to_ui_value(server_value + hard_delta));
-                    app.global::<Parameters>()
-                        .set_value_text(dbus_gamma_to_string(settings.gamma.default).into());
-                    settings.invalidate_deltas();
+                    /*
+                                        let proxy = proxy_ref.lock().expect("rust: unlock proxy");
+                                        let server_value = proxy.gamma().expect("rust: get server gamma");
+                                        let hard_delta = settings.gamma.default - server_value;
+                                        proxy
+                                            .update_gamma(hard_delta)
+                                            .expect("rust: expect set gamma");
+                                        settings.set_gamma(dbus_gamma_to_ui_value(server_value + hard_delta));
+                                        app.global::<Parameters>()
+                                            .set_value_text(dbus_gamma_to_string(settings.gamma.default).into());
+                                        settings.invalidate_deltas();
+                    */
                 }
                 _ => {}
             }
@@ -430,7 +479,7 @@ fn main() -> Result<(), AppletError> {
     let timer = slint::Timer::default();
     {
         let app_weak = app.as_weak();
-        let proxy_ref = proxy.clone();
+        //let proxy_ref = proxy.clone();
         let settings_ref = settings.clone();
         timer.start(
             slint::TimerMode::Repeated,
@@ -439,14 +488,17 @@ fn main() -> Result<(), AppletError> {
                 let app = app_weak.unwrap();
                 app.invoke_tick(TICK_DELTA as f32);
 
-                let proxy = proxy_ref.lock().expect("rust: unlock proxy");
+                //let proxy = proxy_ref.lock().expect("rust: unlock proxy");
                 let mut settings = settings_ref.lock().expect("rust: unlock settings");
 
+                /*
                 if settings.invert.delta_accumulation != 0.0 {
                     proxy.toggle_inverted().expect("rust: expect set inverted");
                     settings.invalidate_deltas();
                 }
+                */
 
+                /*
                 if settings.temperature.delta_accumulation != 0.0 {
                     let server_value =
                         proxy.temperature().expect("rust: get server temperature") as i16;
@@ -472,23 +524,31 @@ fn main() -> Result<(), AppletError> {
                         settings.invalidate_deltas();
                     }
                 }
+                */
 
                 if settings.brightness.delta_accumulation != 0.0 {
-                    let server_value = proxy.brightness().expect("rust: get server brightness");
+                    let server_value = get_brightnessctl_percent(); //.brightness().expect("rust: get server brightness");
                     let rounded_delta = dbus_brightness_rounded(ui_brightness_delta_to_dbus_value(
                         settings.brightness.delta_accumulation,
                     ));
                     let final_value = server_value + rounded_delta;
-                    if final_value > 0.2 && final_value < 1.0 {
+                    if final_value > 0.01 && final_value < 1.0 {
                         app.global::<Parameters>()
                             .set_value_text(dbus_brightness_to_string(final_value).into());
+                        let final_value_str = ((final_value * 24242.0).round()).to_string();
+                        let _ = Command::new("brightnessctl")
+                            .args(["s", &final_value_str])
+                            .output();
+                        /*
                         proxy
                             .update_brightness(rounded_delta)
                             .expect("rust: expect set brightness");
+                        */
                         settings.invalidate_deltas();
                     }
                 }
 
+                /*
                 if settings.gamma.delta_accumulation != 0.0 {
                     let server_value = proxy.gamma().expect("rust: get server gamma");
                     let rounded_delta =
@@ -503,6 +563,7 @@ fn main() -> Result<(), AppletError> {
                         settings.invalidate_deltas();
                     }
                 }
+                */
             },
         );
     }

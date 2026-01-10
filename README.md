@@ -58,8 +58,11 @@ Click, drag, or scroll the sliders to change the values. `shift + scroll` change
 
 In progress:
 
-- [ ] Adding back tempreature, gamma, and invert color bars.
 - [ ] Fixing weird behavior when using brightnessctl elsewhere while applet is running
+
+0.2.2 changes:
+
+- [x] Adding back tempreature, gamma, and invert color bars.
 
 0.2.1 changes:
 
@@ -125,7 +128,8 @@ Add to `~/.config/sway/config`:
 for_window [app_id="wl-gammarelay-brightnessctl-applet"] sticky enable, move position cursor, move up 20
 ```
 
-#### Configuration in Hyprland:
+#### Configuration in Hyprland
+
 Add to `"~/.config/hypr/hyprland.conf"`
 
 ```
@@ -133,8 +137,6 @@ windowrule = float true, move cursor_x 50, match:class wl-gammarelay-brightnessc
 ```
 
 #### Curiosity
-
-**Only brightness slider is available right now, same effect as using `-itg`. All other flags should still work.**
 
 ```bash
 # Open a simple window that does not automatically close.

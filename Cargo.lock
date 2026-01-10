@@ -5178,7 +5178,7 @@ dependencies = [
 
 [[package]]
 name = "wl-gammarelay-brightnessctl-applet"
-version = "0.2.1"
+version = "0.2.2"
 dependencies = [
  "clap",
  "slint",

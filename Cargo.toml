@@ -3,7 +3,7 @@ name = "wl-gammarelay-brightnessctl-applet"
 description = "Control wl-gammarelay-rs and brightnessctl via applet."
 authors = ["June Elva", "Owen Parsley"]
 edition = "2021"
-version = "0.2.1"
+version = "0.2.2"
 build = "build.rs"
 
 [dependencies]

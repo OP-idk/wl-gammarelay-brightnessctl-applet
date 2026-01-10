@@ -84,7 +84,7 @@ In progress:
 
 Known issue(s):
 
-- There can be drift when changing sliders with wheel or left click. See 0.1.4 bugfix.
+- Manually changing the brightness with brightnessctl while the applet is running breaks it. Restarting the applet fixes the behavior
 
 Contribution welcome.
 
@@ -124,6 +124,11 @@ Add to `~/.config/sway/config`:
 ```swayconfig
 for_window [app_id="wl-gammarelay-brightnessctl-applet"] sticky enable, move position cursor, move up 20
 ```
+
+#### Configuration in Hyprland:
+Add to `"~/.config/hypr/hyprland.conf"`
+
+`windowrule = float true, move cursor_x 50, match:class wl-gammarelay-brightnessctl-applet`
 
 #### Curiosity
 

@@ -1,9 +1,9 @@
 [package]
-name = "wl-gammarelay-applet"
-description = "Control wl-gammarelay-rs via applet."
-authors = ["June Elva"]
+name = "wl-gammarelay-brightnessctl-applet"
+description = "Control wl-gammarelay-rs and brightnessctl via applet."
+authors = ["June Elva", "Owen Parsley"]
 edition = "2021"
-version = "0.1.4"
+version = "0.2.1"
 build = "build.rs"
 
 [dependencies]

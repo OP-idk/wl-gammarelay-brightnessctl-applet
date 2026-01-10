@@ -128,7 +128,9 @@ for_window [app_id="wl-gammarelay-brightnessctl-applet"] sticky enable, move pos
 #### Configuration in Hyprland:
 Add to `"~/.config/hypr/hyprland.conf"`
 
-`windowrule = float true, move cursor_x 50, match:class wl-gammarelay-brightnessctl-applet`
+```
+windowrule = float true, move cursor_x 50, match:class wl-gammarelay-brightnessctl-applet`
+```
 
 #### Curiosity
 
